@@ -14,7 +14,8 @@ import {
   HighlighCards,
   Transactions,
   Title,
-  TransactionsList
+  TransactionsList,
+  LogoutButton
  } from './styles';
 
 
@@ -80,7 +81,10 @@ export function Dashboard() {
             </User>
           </UserInfo>
 
-          <Icon name="power"/>
+          <LogoutButton onPress={() => {}}>
+            <Icon name="power"/>
+          </LogoutButton>
+            
 
         </UserWrapper>
 
@@ -101,7 +105,7 @@ export function Dashboard() {
         />
         <HighLighCard 
           title="Total" 
-          amount='R$ 16.400,00' 
+          amount='R$ 16.000,00' 
           lastTransaction='01 à 16 de abril'
           type='total'
         />    

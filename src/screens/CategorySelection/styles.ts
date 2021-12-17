@@ -8,6 +8,10 @@ interface CategoryProps {
   onPress: () => void;
 }
 
+interface TextIconProps {
+  isActive: boolean;
+}
+
 
 export const Container = styled(GestureHandlerRootView)`
   flex: 1;
@@ -36,18 +40,26 @@ export const Category = styled.TouchableOpacity<CategoryProps>`
   align-items: center;
 
   background: ${({theme, isActive}) => isActive ? (
-    theme.colors.secondary_light) : (
+    theme.colors.primary_light) : (
     theme.colors.background)};
 `;
 
-export const Icon = styled(Feather)`
+export const Icon = styled(Feather)<TextIconProps>`
   font-size: ${RFValue(20)}px;
   margin: 0 16px 0 0;
+
+  color: ${({theme, isActive}) => isActive ? (
+    theme.colors.shape) : (
+    theme.colors.text_dark)};
 `;
 
-export const Name = styled.Text`
+export const Name = styled.Text<TextIconProps>`
   font-family: ${({theme}) => theme.fonts.regular};
   font-size: ${RFValue(14)}px;
+
+  color: ${({theme, isActive}) => isActive ? (
+    theme.colors.shape) : (
+    theme.colors.text_dark)};
 `;
 
 export const Separator = styled.View`

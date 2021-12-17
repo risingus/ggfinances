@@ -41,8 +41,13 @@ export function CategorySelection({
               onPress={() => setCategory(item)}
               isActive={category.key === item.key}
             >
-              <Icon name={item.icon} />
-              <Name>
+              <Icon 
+                name={item.icon} 
+                isActive={category.key === item.key}
+              />
+              <Name
+                isActive={category.key === item.key}
+              >
                 {item.name}
               </Name>
             </Category>
