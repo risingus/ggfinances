@@ -23,7 +23,7 @@ export const Header = styled.View`
 export const UserWrapper = styled.View`
   width: 100%;
   padding: 0 24px;
-  margin-top: ${getStatusBarHeight() + RFValue(28)}px;
+  margin-top: ${getStatusBarHeight() + RFValue(20)}px;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
@@ -76,14 +76,14 @@ export const HighlighCards = styled.ScrollView.attrs({
 })`
   width: 100%;
   position: absolute;
-  margin-top: ${RFPercentage(20)}px;
+  margin-top: ${RFPercentage(22)}px;
 `;
 
 
 export const Transactions = styled.View`
   flex: 1;
   padding: 0 24px;
-  margin: ${RFPercentage(12)}px 0 0 0;
+  margin: ${RFPercentage(14)}px 0 0 0;
 `;
 
 export const Title  = styled.Text`
@@ -99,7 +99,11 @@ export const TransactionsList = styled(
   contentContainerStyle: {
     paddingBottom: getBottomSpace()
   }
-
 })`
+`;
 
+export const LoadContainer = styled.View`
+  flex: 1;
+  justify-content: center;
+  align-items: center;
 `;
