@@ -2,9 +2,8 @@ export default {
   colors: {
     primary: '#5636d3',
     primary_light: 'rgba(86, 54, 211, 0.9)',
-    // secondary: '#F72585',
-    secondary: '#32292f',
-    secondary_light: 'rgba(255, 135, 44, 0.3)',
+    secondary: '#B026FF',
+    secondary_light: 'rgba(176, 38, 255, 0.9)',
     success: '#12a454',
     success_light: 'rgba(18, 164, 84, 0.6)',
     attention: '#e83f5b',

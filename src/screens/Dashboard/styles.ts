@@ -76,14 +76,14 @@ export const HighlighCards = styled.ScrollView.attrs({
 })`
   width: 100%;
   position: absolute;
-  margin-top: ${RFPercentage(22)}px;
+  margin-top: ${RFPercentage(18)}px;
 `;
 
 
 export const Transactions = styled.View`
   flex: 1;
   padding: 0 24px;
-  margin: ${RFPercentage(14)}px 0 0 0;
+  margin: ${RFPercentage(10)}px 0 0 0;
 `;
 
 export const Title  = styled.Text`

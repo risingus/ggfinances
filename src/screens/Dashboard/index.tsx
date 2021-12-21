@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {useTheme} from 'styled-components';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator } from 'react-native';
@@ -64,6 +64,19 @@ export function Dashboard() {
   }
 
   function getHightLightCardData(value) {
+    if (!value) {
+      const summary = {
+        total: '',
+        deposits: '',
+        withdraws: '',
+        lastTransactions: {
+          lastWithdraw: '',
+          lastDeposit: '',
+          lastTransaction: ''
+        }
+      };
+      return summary;
+    }
     const lastTransactions = getLastTransactions(value);
 
     const summary = value.reduce(
@@ -124,16 +137,10 @@ export function Dashboard() {
     setTransactions(formatedTransactions);
     setHighLightData(summary);
     setIsLoading(false)
-    console.log(summary)
   }
-
-  useEffect(() => {
-    loadTransaction();
-  }, [])
 
   useFocusEffect(useCallback(() => {
     loadTransaction();
-
   }, []))
 
   return (
@@ -174,26 +181,41 @@ export function Dashboard() {
             <HighLighCard
               title="Entradas"
               amount={highLightData.deposits}
-              lastTransaction={`Última entrada dia ${highLightData.lastTransactions.lastDeposit}`}
+              lastTransaction={
+                highLightData.lastTransactions.lastDeposit ? (
+                  `Última entrada dia ${highLightData.lastTransactions.lastDeposit}`) : (
+                    `Nenhuma entrada efetuada`
+                )
+              }
               type='up'
             />
             <HighLighCard
               title="Saídas"
               amount={highLightData.withdraws}
-              lastTransaction={`Última saída dia ${highLightData.lastTransactions.lastWithdraw}`}
+              lastTransaction={
+                highLightData.lastTransactions.lastWithdraw ? (
+                  `Última saída dia ${highLightData.lastTransactions.lastWithdraw}`) : (
+                    `Nenhuma gasto registrado`
+                  )
+              }
               type='down'
             />
             <HighLighCard
               title="Total"
               amount={highLightData.total}
-              lastTransaction={`01 à ${highLightData.lastTransactions.lastTransaction}`}
+              lastTransaction={
+                highLightData.lastTransactions.lastTransaction ? (
+                  `01 à ${highLightData.lastTransactions.lastTransaction}`) : (
+                    ''
+                  )
+              }
               type='total'
             />
           </HighlighCards>
 
           <Transactions>
             <Title>
-              Transações
+              {transactions.length >= 1 ? 'Transações' : ''}
             </Title>
 
             <TransactionsList

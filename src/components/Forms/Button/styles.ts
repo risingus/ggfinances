@@ -6,7 +6,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 
 export const Container = styled(RectButton)`
   width: 100%;
-  background: ${({theme}) => theme.colors.secondary};
+  background: ${({theme}) => theme.colors.primary};
   border-radius: 5px;
   align-items: center;
   justify-content: center;
