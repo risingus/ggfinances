@@ -48,18 +48,21 @@ export function Dashboard() {
 
 
   function getLastTransactions(value: TransactionsListProps[]) {
-    const entries = new Date(Math.max.apply(Math, value.filter((transaction: TransactionsListProps) => transaction.type === 'positive')
+    const testEntries = value.filter((transaction) => transaction.type === 'positive');
+    const testWithdraws = value.filter((transaction) => transaction.type === 'negative')
+
+    const entries = new Date(Math.max.apply(Math, testEntries
     .map((transaction: TransactionsListProps) => new Date(transaction.date).getTime())));
 
-    const withdraws = new Date(Math.max.apply(Math, value.filter((transaction: TransactionsListProps) => transaction.type === 'negative')
+    const withdraws = new Date(Math.max.apply(Math, testWithdraws
     .map((transaction: TransactionsListProps) => new Date(transaction.date).getTime())));
 
     const totalTransactions = new Date(Math.max.apply(Math, value.map((transaction) => new Date(transaction.date).getTime())))
-    
+
     return {
-      lastWithdraw: formatStringToDateBig(withdraws),
-      lastDeposit: formatStringToDateBig(entries),
-      lastTransaction: formatStringToDateBig(totalTransactions),
+      lastWithdraw: testWithdraws.length >= 1 ? formatStringToDateBig(withdraws) : '',
+      lastDeposit: testEntries.length >= 1 ? formatStringToDateBig(entries) : '',
+      lastTransaction: value.length >= 1 ? formatStringToDateBig(totalTransactions) : '',
     } 
   }
 
@@ -77,6 +80,7 @@ export function Dashboard() {
       };
       return summary;
     }
+
     const lastTransactions = getLastTransactions(value);
 
     const summary = value.reduce(
@@ -108,15 +112,12 @@ export function Dashboard() {
     summary.lastTransactions = lastTransactions;
 
     return summary;
-
   }
-
 
   async function loadTransaction() {
     const dataKey = '@ggfinances:transactions';
     const response = await AsyncStorage.getItem(dataKey);
     const transactionsResponse = response ? JSON.parse(response) : [];
-
     const summary = await getHightLightCardData(transactionsResponse);
 
     const formatedTransactions: TransactionsListProps[] = transactionsResponse.map((transaction: TransactionsListProps) => {
