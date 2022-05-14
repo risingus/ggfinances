@@ -23,211 +23,213 @@ import {
   LoadContainer
 } from './styles';
 import { formatNumberToMoney, formatStringToDate, formatStringToDateBig } from '../../utils/formatValues';
+import { useAuth } from '../../hooks/auth';
 
 export interface TransactionsListProps extends TransactionCardProps {
-  id: string;
-
+	id: string;
 }
 interface HighLightDataProps {
-  deposits: string;
-  total: string;
-  withdraws: string;
-  lastTransactions?: {
-    lastWithdraw?: string;
-    lastDeposit?: string;
-    lastTransaction?: string;
-  }
+	deposits: string;
+	total: string;
+	withdraws: string;
+	lastTransactions?: {
+		lastWithdraw?: string;
+		lastDeposit?: string;
+		lastTransaction?: string;
+	};
 }
 
-
 export function Dashboard() {
-  const theme = useTheme()
-  const [isLoading, setIsLoading] = useState(true);
-  const [transactions, setTransactions] = useState<TransactionsListProps[]>([]);
-  const [highLightData, setHighLightData] = useState<HighLightDataProps>({} as HighLightDataProps);
+	const theme = useTheme();
+	const { signOut, user } = useAuth();
+	const [isLoading, setIsLoading] = useState(true);
+	const [transactions, setTransactions] = useState<TransactionsListProps[]>([]);
+	const [highLightData, setHighLightData] = useState<HighLightDataProps>({} as HighLightDataProps);
 
+	function getLastTransactions(value: TransactionsListProps[]) {
+		const testEntries = value.filter((transaction) => transaction.type === 'positive');
+		const testWithdraws = value.filter((transaction) => transaction.type === 'negative');
 
-  function getLastTransactions(value: TransactionsListProps[]) {
-    const testEntries = value.filter((transaction) => transaction.type === 'positive');
-    const testWithdraws = value.filter((transaction) => transaction.type === 'negative')
+		const entries = new Date(
+			Math.max.apply(
+				Math,
+				testEntries.map((transaction: TransactionsListProps) =>
+					new Date(transaction.date).getTime()
+				)
+			)
+		);
 
-    const entries = new Date(Math.max.apply(Math, testEntries
-    .map((transaction: TransactionsListProps) => new Date(transaction.date).getTime())));
+		const withdraws = new Date(
+			Math.max.apply(
+				Math,
+				testWithdraws.map((transaction: TransactionsListProps) =>
+					new Date(transaction.date).getTime()
+				)
+			)
+		);
 
-    const withdraws = new Date(Math.max.apply(Math, testWithdraws
-    .map((transaction: TransactionsListProps) => new Date(transaction.date).getTime())));
+		const totalTransactions = new Date(
+			Math.max.apply(
+				Math,
+				value.map((transaction) => new Date(transaction.date).getTime())
+			)
+		);
 
-    const totalTransactions = new Date(Math.max.apply(Math, value.map((transaction) => new Date(transaction.date).getTime())))
+		return {
+			lastWithdraw: testWithdraws.length >= 1 ? formatStringToDateBig(withdraws) : '',
+			lastDeposit: testEntries.length >= 1 ? formatStringToDateBig(entries) : '',
+			lastTransaction: value.length >= 1 ? formatStringToDateBig(totalTransactions) : '',
+		};
+	}
 
-    return {
-      lastWithdraw: testWithdraws.length >= 1 ? formatStringToDateBig(withdraws) : '',
-      lastDeposit: testEntries.length >= 1 ? formatStringToDateBig(entries) : '',
-      lastTransaction: value.length >= 1 ? formatStringToDateBig(totalTransactions) : '',
-    } 
-  }
+	function getHightLightCardData(value) {
+		if (!value) {
+			const summary = {
+				total: '',
+				deposits: '',
+				withdraws: '',
+				lastTransactions: {
+					lastWithdraw: '',
+					lastDeposit: '',
+					lastTransaction: '',
+				},
+			};
+			return summary;
+		}
 
-  function getHightLightCardData(value) {
-    if (!value) {
-      const summary = {
-        total: '',
-        deposits: '',
-        withdraws: '',
-        lastTransactions: {
-          lastWithdraw: '',
-          lastDeposit: '',
-          lastTransaction: ''
-        }
-      };
-      return summary;
-    }
+		const lastTransactions = getLastTransactions(value);
 
-    const lastTransactions = getLastTransactions(value);
+		const summary = value.reduce(
+			(acc, transaction) => {
+				if (transaction.type === 'positive') {
+					acc.deposits += transaction.amount;
+					acc.total += transaction.amount;
+				} else {
+					acc.withdraws += transaction.amount;
+					acc.total -= transaction.amount;
+				}
 
-    const summary = value.reduce(
-      (acc, transaction) => {
-        if (transaction.type === 'positive') {
-          acc.deposits += transaction.amount;
-          acc.total += transaction.amount;
-        } else {
-          acc.withdraws += transaction.amount;
-          acc.total -= transaction.amount;
-        }
+				return acc;
+			},
+			{
+				deposits: 0,
+				withdraws: 0,
+				total: 0,
+			}
+		);
 
-        return acc;
-      },
-      {
-        deposits: 0,
-        withdraws: 0,
-        total: 0,
-      }
-    );
+		summary.total = formatNumberToMoney(Number(summary.total));
 
+		summary.deposits = formatNumberToMoney(Number(summary.deposits));
 
-    summary.total = formatNumberToMoney(Number(summary.total));
+		summary.withdraws = formatNumberToMoney(Number(summary.withdraws));
 
-    summary.deposits = formatNumberToMoney(Number(summary.deposits));
+		summary.lastTransactions = lastTransactions;
 
-    summary.withdraws = formatNumberToMoney(Number(summary.withdraws));
+		return summary;
+	}
 
-    summary.lastTransactions = lastTransactions;
+	async function loadTransaction() {
+		const dataKey = `@ggfinances:transactions:user:${user.id}`;
+		const response = await AsyncStorage.getItem(dataKey);
+		const transactionsResponse = response ? JSON.parse(response) : [];
+		const summary = await getHightLightCardData(transactionsResponse);
 
-    return summary;
-  }
+		const formatedTransactions: TransactionsListProps[] = transactionsResponse.map(
+			(transaction: TransactionsListProps) => {
+				const amount = formatNumberToMoney(Number(transaction.amount));
 
-  async function loadTransaction() {
-    const dataKey = '@ggfinances:transactions';
-    const response = await AsyncStorage.getItem(dataKey);
-    const transactionsResponse = response ? JSON.parse(response) : [];
-    const summary = await getHightLightCardData(transactionsResponse);
+				const formatedDate = formatStringToDate(transaction.date);
 
-    const formatedTransactions: TransactionsListProps[] = transactionsResponse.map((transaction: TransactionsListProps) => {
-      const amount = formatNumberToMoney(Number(transaction.amount))
+				return {
+					id: transaction.id,
+					name: transaction.name,
+					amount,
+					type: transaction.type,
+					category: transaction.category,
+					date: formatedDate,
+				};
+			}
+		);
+		setTransactions(formatedTransactions);
+		setHighLightData(summary);
+		setIsLoading(false);
+	}
 
-      const formatedDate = formatStringToDate(transaction.date);
+	useFocusEffect(
+		useCallback(() => {
+			loadTransaction();
+		}, [])
+	);
 
-      return {
-        id: transaction.id,
-        name: transaction.name,
-        amount,
-        type: transaction.type,
-        category: transaction.category,
-        date: formatedDate
-      }
-    })
+	return (
+		<Container>
+			{isLoading ? (
+				<LoadContainer>
+					<ActivityIndicator color={theme.colors.primary} size="large" />
+				</LoadContainer>
+			) : (
+				<>
+					<Header>
+						<UserWrapper>
+							<UserInfo>
+								<Photo source={{ uri: `${user.photo }`}} />
+								<User>
+									<UserGreeting>Olá,</UserGreeting>
+									<UserName>{user.name}</UserName>
+								</User>
+							</UserInfo>
 
-    setTransactions(formatedTransactions);
-    setHighLightData(summary);
-    setIsLoading(false)
-  }
+							<LogoutButton onPress={signOut}>
+								<Icon name="power" />
+							</LogoutButton>
+						</UserWrapper>
+					</Header>
 
-  useFocusEffect(useCallback(() => {
-    loadTransaction();
-  }, []))
+					<HighlighCards>
+						<HighLighCard
+							title="Entradas"
+							amount={highLightData.deposits}
+							lastTransaction={
+								highLightData.lastTransactions.lastDeposit
+									? `Última entrada dia ${highLightData.lastTransactions.lastDeposit}`
+									: `Nenhuma entrada efetuada`
+							}
+							type="up"
+						/>
+						<HighLighCard
+							title="Saídas"
+							amount={highLightData.withdraws}
+							lastTransaction={
+								highLightData.lastTransactions.lastWithdraw
+									? `Última saída dia ${highLightData.lastTransactions.lastWithdraw}`
+									: `Nenhuma gasto registrado`
+							}
+							type="down"
+						/>
+						<HighLighCard
+							title="Total"
+							amount={highLightData.total}
+							lastTransaction={
+								highLightData.lastTransactions.lastTransaction
+									? `01 à ${highLightData.lastTransactions.lastTransaction}`
+									: ''
+							}
+							type="total"
+						/>
+					</HighlighCards>
 
-  return (
-    <Container>
-      {isLoading ? (
-        <LoadContainer>
-          <ActivityIndicator color={theme.colors.primary} size="large"/>
-        </LoadContainer>
-       ) : (
-        <>
-          <Header>
-            <UserWrapper>
+					<Transactions>
+						<Title>{transactions.length >= 1 ? 'Transações' : ''}</Title>
 
-              <UserInfo>
-                <Photo
-                  source={{ uri: "https://avatars.githubusercontent.com/u/42497575?v=4" }}
-                />
-                <User>
-                  <UserGreeting>
-                    Olá,
-                  </UserGreeting>
-                  <UserName>
-                    Gustavo
-                  </UserName>
-                </User>
-              </UserInfo>
-
-              <LogoutButton onPress={() => { }}>
-                <Icon name="power" />
-              </LogoutButton>
-
-
-            </UserWrapper>
-
-          </Header>
-
-          <HighlighCards>
-            <HighLighCard
-              title="Entradas"
-              amount={highLightData.deposits}
-              lastTransaction={
-                highLightData.lastTransactions.lastDeposit ? (
-                  `Última entrada dia ${highLightData.lastTransactions.lastDeposit}`) : (
-                    `Nenhuma entrada efetuada`
-                )
-              }
-              type='up'
-            />
-            <HighLighCard
-              title="Saídas"
-              amount={highLightData.withdraws}
-              lastTransaction={
-                highLightData.lastTransactions.lastWithdraw ? (
-                  `Última saída dia ${highLightData.lastTransactions.lastWithdraw}`) : (
-                    `Nenhuma gasto registrado`
-                  )
-              }
-              type='down'
-            />
-            <HighLighCard
-              title="Total"
-              amount={highLightData.total}
-              lastTransaction={
-                highLightData.lastTransactions.lastTransaction ? (
-                  `01 à ${highLightData.lastTransactions.lastTransaction}`) : (
-                    ''
-                  )
-              }
-              type='total'
-            />
-          </HighlighCards>
-
-          <Transactions>
-            <Title>
-              {transactions.length >= 1 ? 'Transações' : ''}
-            </Title>
-
-            <TransactionsList
-              data={transactions}
-              keyExtractor={(item: TransactionsListProps) => item.id}
-              renderItem={({ item }) => <TransactionCard data={item} />}
-            />
-          </Transactions>
-        </>
-      )
-      }
-    </Container>
-  )
+						<TransactionsList
+							data={transactions}
+							keyExtractor={(item: TransactionsListProps) => item.id}
+							renderItem={({ item }) => <TransactionCard data={item} />}
+						/>
+					</Transactions>
+				</>
+			)}
+		</Container>
+	);
 }
